@@ -94,12 +94,4 @@ object Main extends App {
 
     println(s"gain: $y - $x = ${y - x}")
   }
-
-  // val btc = manager.token("BTC")
-  // val x = 1000
-  // val t1 = btc.buySmartToken(x)
-  // println(btc)
-  // val x2 = btc.sellSmartToken(t1)
-  // println(btc)
-  // println(x + "->" + x2)
 }
