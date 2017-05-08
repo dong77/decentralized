@@ -19,13 +19,13 @@ class TockerChangerManager {
 
 class TokenChanger(src: BancorToken, dest: BancorToken) {
   def apply(amount: Long) = {
-     // println(".......")
+    // println(".......")
     val tokenAmount = src.buySmartToken(amount)
     // println(".......")
     val destAmount = dest.sellSmartToken(tokenAmount)
-     // println("...d....")
+    // println("...d....")
     println(s"operation: $amount ${src.id} -> $tokenAmount TOKEN -> $destAmount ${dest.id}")
-    destAmount 
+    destAmount
   }
 
   // def price(amount: Long): Option[Double] = {
@@ -46,12 +46,10 @@ class TokenChanger(src: BancorToken, dest: BancorToken) {
 case class BancorToken(
   val id: String,
   var supply: Long,
-  var reserve: Long
- )(implicit val manager:TockerChangerManager) {
-
+  var reserve: Long)(implicit val manager: TockerChangerManager) {
 
   def price = reserve.toDouble / supply
-  lazy val crr= supply.toDouble / manager.totalSupply
+  lazy val crr = supply.toDouble / manager.totalSupply
 
   // Buy smart token with reserve token
   def buySmartToken(reserveAmount: Long, perform: Boolean = true): Long = {
@@ -99,12 +97,10 @@ object Main extends App {
 
   implicit val manager = new TockerChangerManager()
   manager.addBancorToken(BancorToken("AAA", 1E9.toLong, 1E11.toLong)) // 1000 BTC and 10000 CNY each
-  manager.addBancorToken(BancorToken("BBB", 1E9.toLong, 1E11.toLong)) 
-    // manager.addBancorToken(BancorToken("ETH",1E9.toLong, 1E11.toLong)) 
+  manager.addBancorToken(BancorToken("BBB", 1E9.toLong, 1E11.toLong))
+  // manager.addBancorToken(BancorToken("ETH",1E9.toLong, 1E11.toLong)) 
 
-
-
-  val changer1 = manager.changer("AAA"-> "BBB")
+  val changer1 = manager.changer("AAA" -> "BBB")
   val changer2 = changer1.reverse
 
   println(manager)
@@ -114,18 +110,15 @@ object Main extends App {
     val x = 10000000L
     val t = changer1(x)
 
-  println(manager)
-  println("-------------------------------------------")
+    println(manager)
+    println("-------------------------------------------")
     val y = changer2(t)
 
+    println(manager)
+    println("-------------------------------------------")
 
-  println(manager)
-  println("-------------------------------------------")
-
-
-println(s"gain: $y - $x = ${y-x}")
+    println(s"gain: $y - $x = ${y - x}")
   }
-
 
   // val btc = manager.token("BTC")
   // val x = 1000
