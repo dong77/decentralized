@@ -34,7 +34,7 @@ case class BancorToken(
   var reserve: Long)(implicit val manager: TockerChangerManager) {
 
   lazy val crr = supply.toDouble / manager.totalSupply
-  def price = reserve.toDouble / supply//(manager.totalSupply * crr)
+  def price = reserve.toDouble / manager.totalSupply * crr
 
   def buySmartToken(reserveAmount: Long, perform: Boolean = true): Long = {
     assert(reserveAmount >= 0) // for now
@@ -62,8 +62,8 @@ case class BancorToken(
     }
   }
 
-  private def smart2reserve(amount: Long) = Math.floor((Math.pow(1 + amount.toDouble / supply, 1 / crr) - 1) * reserve).toLong
-  private def reserve2smart(amount: Long) = Math.floor((Math.pow(1 + amount.toDouble / reserve, crr) - 1) * supply).toLong
+  private def smart2reserve(amount: Long) = Math.floor((Math.pow(1 + amount.toDouble / manager.totalSupply, 1 / crr) - 1) * reserve).toLong
+  private def reserve2smart(amount: Long) = Math.floor((Math.pow(1 + amount.toDouble / reserve, crr) - 1) * manager.totalSupply).toLong
 
   override def toString() = s"$id reserve: $reserve, token supply: $supply, crr: $crr, price: $price}}"
 }
