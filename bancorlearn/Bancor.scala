@@ -18,29 +18,14 @@ class TockerChangerManager {
 }
 
 class TokenChanger(src: BancorToken, dest: BancorToken) {
-  def apply(amount: Long) = {
-    // println(".......")
+  def convert(amount: Long) = {
     val tokenAmount = src.buySmartToken(amount)
-    // println(".......")
     val destAmount = dest.sellSmartToken(tokenAmount)
-    // println("...d....")
     println(s"operation: $amount ${src.id} -> $tokenAmount TOKEN -> $destAmount ${dest.id}")
     destAmount
   }
 
-  // def price(amount: Long): Option[Double] = {
-  //   println("srcAmount: " + amount)
-  //   val tokenAmount = src.buySmartToken(amount, false)
-  //   println("tokenAmount: " + tokenAmount)
-  //   val destAmount = dest.sellSmartToken(tokenAmount, false)
-  //   println("destAmount: " + destAmount)
-  //   if (tokenAmount == 0 || destAmount == 0) None
-  //   else Some(destAmount * 1.0 / amount)
-  // }
-
   def price = dest.price / src.price
-
-  def reverse = new TokenChanger(dest, src)
 }
 
 case class BancorToken(
@@ -48,10 +33,9 @@ case class BancorToken(
   var supply: Long,
   var reserve: Long)(implicit val manager: TockerChangerManager) {
 
-  def price = reserve.toDouble / supply
   lazy val crr = supply.toDouble / manager.totalSupply
+  def price = reserve.toDouble / supply//(manager.totalSupply * crr)
 
-  // Buy smart token with reserve token
   def buySmartToken(reserveAmount: Long, perform: Boolean = true): Long = {
     assert(reserveAmount >= 0) // for now
     val tokenAmount = reserve2smart(reserveAmount)
@@ -60,7 +44,6 @@ case class BancorToken(
       if (perform) {
         supply += tokenAmount
         reserve += reserveAmount
-        // println(s"$id supply= $supply, reserve= $reserve")
       }
       tokenAmount
     }
@@ -74,7 +57,6 @@ case class BancorToken(
       if (perform) {
         supply -= tokenAmount
         reserve -= reserveAmount
-        // println(s"$id supply= $supply, reserve= $reserve")
       }
       reserveAmount
     }
@@ -86,33 +68,26 @@ case class BancorToken(
   override def toString() = s"$id reserve: $reserve, token supply: $supply, crr: $crr, price: $price}}"
 }
 
-// case class LMSR(implicit val b: Double) {
-
-//   def cost(q1: Double, q2: Double)(implicit b: Double) = {
-//     b * Math.log(Math.pow(Math.E, q1 / b) + Math.pow(Math.E, q2 / b))
-//   }
-// }
-
 object Main extends App {
 
   implicit val manager = new TockerChangerManager()
   manager.addBancorToken(BancorToken("AAA", 1E9.toLong, 1E11.toLong)) // 1000 BTC and 10000 CNY each
   manager.addBancorToken(BancorToken("BBB", 1E9.toLong, 1E11.toLong))
-  // manager.addBancorToken(BancorToken("ETH",1E9.toLong, 1E11.toLong)) 
+  manager.addBancorToken(BancorToken("CCC", 1E9.toLong, 1E11.toLong))
 
-  val changer1 = manager.changer("AAA" -> "BBB")
-  val changer2 = changer1.reverse
+  val aaa2bbb = manager.changer("AAA" -> "BBB")
+  val bbb2aaa = manager.changer("BBB" -> "AAA")
 
   println(manager)
   println("-------------------------------------------")
 
   (1 to 1) foreach { i =>
     val x = 10000000L
-    val t = changer1(x)
+    val t = aaa2bbb.convert(x)
 
     println(manager)
     println("-------------------------------------------")
-    val y = changer2(t)
+    val y = bbb2aaa.convert(t)
 
     println(manager)
     println("-------------------------------------------")
