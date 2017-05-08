@@ -15,23 +15,20 @@ class TockerChangerManager {
     tokenMap += token.id -> token
   }
 
-  def getTokenChanger(srcId: String, destId: String) = new TokenChanger(tokenMap(srcId), tokenMap(destId))
+  def changer(dir: (String, String)) = new TokenChanger(tokenMap(dir._1), tokenMap(dir._2))
 
   override def toString() = s"totalTokens: $totalTokens,\n${tokenMap.values.mkString("\n")}"
 }
 
 class TokenChanger(src: BancorToken, dest: BancorToken) {
-  def sell(amount: Long) = {
-    println("srcAmount: " + amount)
+  def apply(amount: Long) = {
     val tokenAmount = src.buySmartToken(amount)
-    println("tokenAmount: " + tokenAmount)
     val destAmount = dest.sellSmartToken(tokenAmount)
-    println("destAmount: " + destAmount)
-    println("real price: " + destAmount * 1.0 / amount)
+    println(s"$amount ${src.id}->$tokenAmount->$destAmount ${dest.id} @${ destAmount * 1.0 / amount}")
     destAmount
   }
 
-  def quoteSellPrice(amount: Long): Option[Double] = {
+  def price(amount: Long): Option[Double] = {
     println("srcAmount: " + amount)
     val tokenAmount = src.buySmartToken(amount, false)
     println("tokenAmount: " + tokenAmount)
@@ -56,7 +53,7 @@ case class BancorToken(
   // Buy smart token with reserve token
   def buySmartToken(reserveAmount: Long, perform: Boolean = true): Long = {
     assert(reserveAmount >= 0) // for now
-    val tokenAmount = r2s(reserveAmount)
+    val tokenAmount = reserve2smart(reserveAmount)
     if (tokenAmount == 0 || reserveAmount == 0) 0
     else {
       if (perform) {
@@ -69,7 +66,7 @@ case class BancorToken(
 
   def sellSmartToken(tokenAmount: Long, perform: Boolean = true): Long = {
     assert(tokenAmount >= 0) // for now
-    val reserveAmount = s2r(tokenAmount)
+    val reserveAmount = smart2reserve(tokenAmount)
     if (tokenAmount == 0 || reserveAmount == 0) 0
     else {
       if (perform) {
@@ -80,8 +77,8 @@ case class BancorToken(
     }
   }
 
-  private def s2r(amount: Long) = ((Math.pow(1 + amount.toDouble / supply, 1 / crr) - 1) * reserve).toLong
-  private def r2s(amount: Long) = ((Math.pow(1 + amount.toDouble / reserve, crr) - 1) * supply).toLong
+  private def smart2reserve(amount: Long) = Math.floor((Math.pow(1 + amount.toDouble / supply, 1 / crr) - 1) * reserve).toLong
+  private def reserve2smart(amount: Long) = Math.floor((Math.pow(1 + amount.toDouble / reserve, crr) - 1) * supply).toLong
 
   override def toString() = s"$id: $reserve, supply: $supply, crr: $crr, price: $price}}"
 }
@@ -96,19 +93,18 @@ case class BancorToken(
 object Main extends App {
 
   val manager = new TockerChangerManager()
-  manager.addBancorToken(BancorToken("BTC", 1000000000000L, 500000L))
-  manager.addBancorToken(BancorToken("LTC", 1000000000000L, 50000000L))
+  manager.addBancorToken(BancorToken("BTC", 1E10.toLong, 5E4.toLong))
+  manager.addBancorToken(BancorToken("LTC", 1E10.toLong, 1E5.toLong))
 
   println(manager)
-  val changer1 = manager.getTokenChanger("BTC", "LTC")
+  val changer1 = manager.changer("BTC"-> "LTC")
   val changer2 = changer1.reverse
 
-  (1 to 10000) foreach { i =>
-    // println("---" + i)
-    val x = changer1.sell(1000)
-    val y = changer2.sell(x)
-    println("1000 vs " + y)
-    // println(manager)
+  (1 to 10) foreach { i =>
+    val x = 5000L
+    val t = changer1(x)
+    val y = changer2(t)
+    println(s"$x ~ $y\n")
   }
 
   println("---")
