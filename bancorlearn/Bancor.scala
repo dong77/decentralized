@@ -22,12 +22,17 @@ class TockerChangerManager {
 
 class TokenChanger(src: BancorToken, dest: BancorToken) {
   def sell(amount: Long) = {
+    println("srcAmount: " + amount)
     val tokenAmount = src.buySmartToken(amount)
+    println("tokenAmount: " + tokenAmount)
     val destAmount = dest.sellSmartToken(tokenAmount)
+    println("destAmount: " + destAmount)
+    println("real price: " + destAmount * 1.0 / amount)
     destAmount
   }
 
   def quoteSellPrice(amount: Long): Option[Double] = {
+    println("srcAmount: " + amount)
     val tokenAmount = src.buySmartToken(amount, false)
     println("tokenAmount: " + tokenAmount)
     val destAmount = dest.sellSmartToken(tokenAmount, false)
@@ -35,6 +40,10 @@ class TokenChanger(src: BancorToken, dest: BancorToken) {
     if (tokenAmount == 0 || destAmount == 0) None
     else Some(destAmount * 1.0 / amount)
   }
+
+  def price = dest.price / src.price
+
+  def reverse = new TokenChanger(dest, src)
 }
 
 case class BancorToken(
@@ -46,7 +55,7 @@ case class BancorToken(
 
   // Buy smart token with reserve token
   def buySmartToken(reserveAmount: Long, perform: Boolean = true): Long = {
-    // assert(reserveAmount >= 0) // for now
+    assert(reserveAmount >= 0) // for now
     val tokenAmount = r2s(reserveAmount)
     if (tokenAmount == 0 || reserveAmount == 0) 0
     else {
@@ -59,7 +68,7 @@ case class BancorToken(
   }
 
   def sellSmartToken(tokenAmount: Long, perform: Boolean = true): Long = {
-    // assert(tokenAmount >= 0) // for now
+    assert(tokenAmount >= 0) // for now
     val reserveAmount = s2r(tokenAmount)
     if (tokenAmount == 0 || reserveAmount == 0) 0
     else {
@@ -91,6 +100,17 @@ object Main extends App {
   manager.addBancorToken(BancorToken("LTC", 1000000000000L, 50000000L))
 
   println(manager)
-  println(manager.getTokenChanger("BTC", "LTC").quoteSellPrice(1000))
+  val changer1 = manager.getTokenChanger("BTC", "LTC")
+  val changer2 = changer1.reverse
+
+  (1 to 10000) foreach { i =>
+    // println("---" + i)
+    val x = changer1.sell(1000)
+    val y = changer2.sell(x)
+    println("1000 vs " + y)
+    // println(manager)
+  }
+
+  println("---")
   println(manager)
 }
