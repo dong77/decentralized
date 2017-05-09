@@ -87,7 +87,7 @@ object Main extends App {
   println(manager)
   println("-------------------------------------------")
 
-  (1 to 1) foreach { i =>
+  (1 to 5) foreach { i =>
     val x = 10000000L
     val t = aaa2bbb.convert(x)
 
