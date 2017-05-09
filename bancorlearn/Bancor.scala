@@ -75,12 +75,11 @@ object Main extends App {
   // manager.addBancorToken(BancorToken("BBB", 1E9.toLong, 1E11.toLong))
   // manager.addBancorToken(BancorToken("CCC", 1E9.toLong, 1E11.toLong))
 
-
   val supplySize = 1E8.toLong
   val reserveSize = 1E8.toLong
   manager.addBancorToken(BancorToken("AAA", supplySize, reserveSize))
   manager.addBancorToken(BancorToken("BBB", supplySize, reserveSize))
-  manager.addBancorToken(BancorToken("CCC", supplySize, reserveSize)) 
+  // manager.addBancorToken(BancorToken("CCC", supplySize, reserveSize)) 
 
   val aaa2bbb = manager.changer("AAA" -> "BBB")
   val bbb2aaa = manager.changer("BBB" -> "AAA")
