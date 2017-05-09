@@ -34,7 +34,7 @@ case class BancorToken(
   var reserve: Long)(implicit val manager: TockerChangerManager) {
 
   lazy val crr = supply.toDouble / manager.totalSupply
-  def price = reserve.toDouble / manager.totalSupply * crr
+  def price = reserve.toDouble / (manager.totalSupply * crr)
 
   def buySmartToken(reserveAmount: Long, perform: Boolean = true): Long = {
     assert(reserveAmount >= 0) // for now
