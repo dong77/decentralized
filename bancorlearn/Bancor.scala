@@ -21,7 +21,7 @@ class TokenChanger(src: BancorToken, dest: BancorToken) {
   def convert(amount: Long) = {
     val tokenAmount = src.buySmartToken(amount)
     val destAmount = dest.sellSmartToken(tokenAmount)
-    println(s"operation: $amount ${src.id} -> $tokenAmount TOKEN -> $destAmount ${dest.id}")
+    println(s"operation: $amount ${src.id} -> $tokenAmount BNCDGX -> $destAmount ${dest.id}")
     destAmount
   }
 
@@ -34,7 +34,7 @@ case class BancorToken(
   var reserve: Long)(implicit val manager: TockerChangerManager) {
 
   lazy val crr = supply.toDouble / manager.totalSupply
-  def price = reserve.toDouble / manager.totalSupply * crr
+  def price = reserve.toDouble / (manager.totalSupply * crr)
 
   def buySmartToken(reserveAmount: Long, perform: Boolean = true): Long = {
     assert(reserveAmount >= 0) // for now
@@ -65,7 +65,7 @@ case class BancorToken(
   private def smart2reserve(amount: Long) = Math.floor((Math.pow(1 + amount.toDouble / manager.totalSupply, 1 / crr) - 1) * reserve).toLong
   private def reserve2smart(amount: Long) = Math.floor((Math.pow(1 + amount.toDouble / reserve, crr) - 1) * manager.totalSupply).toLong
 
-  override def toString() = s"$id reserve: $reserve, token supply: $supply, crr: $crr, price: $price}}"
+  override def toString() = s"$id reserve: $reserve, token supply: $supply, crr: $crr, price: $price, market cap: ${manager.totalSupply * price}"
 }
 
 object Main extends App {
@@ -75,29 +75,35 @@ object Main extends App {
   // manager.addBancorToken(BancorToken("BBB", 1E9.toLong, 1E11.toLong))
   // manager.addBancorToken(BancorToken("CCC", 1E9.toLong, 1E11.toLong))
 
-  val supplySize = 1E8.toLong
-  val reserveSize = 1E8.toLong
-  manager.addBancorToken(BancorToken("AAA", supplySize, reserveSize))
-  manager.addBancorToken(BancorToken("BBB", supplySize, reserveSize))
+  manager.addBancorToken(BancorToken("BANCOR", 5000, 5000))
+  manager.addBancorToken(BancorToken("DGX", 5000, 10000))
   // manager.addBancorToken(BancorToken("CCC", supplySize, reserveSize)) 
 
-  val aaa2bbb = manager.changer("AAA" -> "BBB")
-  val bbb2aaa = manager.changer("BBB" -> "AAA")
+  val x = manager.token("BANCOR")
+  val y = manager.token("DGX")
 
+  println("\n\n")
   println(manager)
-  println("-------------------------------------------")
+  println("===")
 
-  (1 to 1) foreach { i =>
-    val x = 10000000L
-    val t = aaa2bbb.convert(x)
-
+  {
+    println("Buying BNCDGX for 30 BANCOR")
+    val tokens = x.buySmartToken(30)
+    println(s"price: ${x.price} conversion ratio: ${30.0 / tokens}")
     println(manager)
-    println("-------------------------------------------")
-    val y = bbb2aaa.convert(t)
-
-    println(manager)
-    println("-------------------------------------------")
-
-    println(s"gain: $y - $x = ${y - x}")
+    println("---")
   }
+
+  {
+    println("Converting 70 DGX to BANCOR / Step 1 (DGX->BNCDGX)")
+    val tokens = y.buySmartToken(70)
+    println(manager)
+    println("---")
+
+    println("Converting 70 DGX to BANCOR / Step 2 (BNCDGX->BANCOR)")
+    x.sellSmartToken(tokens)
+    println(manager)
+    println("---")
+  }
+
 }
