@@ -1,38 +1,49 @@
 package io.dong.makermaker
 
-case class Order(amountA: Double /*out*/ , amountB: Double /*in*/ ) {
+case class Order(amountA: Long /*out*/ , amountB: Long /*in*/ ) {
   lazy val rate = amountA.toDouble / amountB
 }
 
+case class OrderX(order: Order, discount: Double, feePercentage: Double = 0.1) {
+  var amountA: Long = order.amountA
+  var amountB: Long = order.amountB
+
+  lazy val actualRate = order.rate * (1 - discount)
+  lazy val fee = ((amountB - amountA / order.rate) * feePercentage).toLong
+
+  override def toString() = s"$order [ $amountA / $actualRate => ${amountB - fee}+$fee(fee))]"
+}
+
 object Main extends App {
-  val orders = Seq(Order(10000, 10), Order(10, 100), Order(100, 10000))
-  orders.foreach(println)
+  val orders = Seq(Order(10000 * 1000, 10 * 1000), Order(10 * 1000, 100 * 1000), Order(100 * 1000, 8000 * 1000))
 
   val discount = 1 - Math.pow(1 / orders.map(_.rate).reduce(_ * _), 1.0 / orders.size)
+  val orders2 = orders.map { order => OrderX(order, discount) }
+
   val size = orders.size
 
-  var idx = 0;
-  var amountA = orders(0).amountA
+  var bottleNetIndex = 0;
+  var amountA = orders2(0).amountA
 
-  (0 until size*2) foreach { i =>
-  	println("")
+  def calculate(i: Int) = {
+    val o1 = orders2(i % size)
+    val o2 = orders2((i + 1) % size)
 
-    val o1 = orders(i % size)
-    val o2 = orders((i + 1) % size)
+    o1.amountB = (amountA / o1.actualRate).toLong
 
-    val rate1 = o1.rate * (1 - discount)
-    val amountB1 = amountA / rate1
-
-    println(s"$i: $o1 ${amountA.toLong} => ${amountB1.toLong} ($rate1)")
-
-    if (amountB1 > o2.amountA) {
-      idx =i+1 
-      amountA = o2.amountA
-      println("found smaller: " + idx)
+    if (o1.amountB > o2.amountA) {
+      bottleNetIndex = i + 1
     } else {
-      amountA = amountB1
+      o2.amountA = o1.amountB
     }
-
+    amountA = o2.amountA
   }
 
+  (0 until size) foreach (calculate)
+
+  println(s"Bottleneck idx found: $bottleNetIndex")
+
+  (0 to bottleNetIndex) foreach (calculate)
+
+  orders2.foreach(println)
 }
