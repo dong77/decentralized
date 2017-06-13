@@ -49,7 +49,7 @@ object Main extends App {
       orders.map(_ => x).reduce(_ * _ / Const.RATE_AMPLIFIER)
     }
 
-    val diff = Math.abs(rateproduct - rateproduct2)
+    val diff = rateproduct - rateproduct2
 
     println("rateproduct: " + rateproduct)
     println("rateproduct2: " + rateproduct2)
@@ -94,7 +94,7 @@ object Main extends App {
 
   println("discount: " + discount)
 
-  val x = (-1 to 1).map { i =>
+  val x = (-10 to 10).map { i =>
     println("=====")
     (i, doit(discount + i))
   }
